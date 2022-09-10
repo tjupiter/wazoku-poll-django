@@ -13,17 +13,25 @@ def index(request):
         'polls': []
     }
     polls = models.Poll.objects.all()
+    answers = models.Answer.objects.select_related('poll').prefetch_related('user').all()
     for poll in polls:
+        answers_to_poll = []
+        for answer in answers:
+            if (answer.poll.id == poll.id):
+                single_answer = {
+                    "value": answer.value,
+                    "user_first_name": answer.user.first_name,
+                    "user_last_name": answer.user.last_name,
+                    "id": answer.pk,
+                }
+                answers_to_poll.append(single_answer)
+
         item = {
             "title": poll.title,
             "id": poll.pk,
-            "answers": [{
-                "value": answer.value,
-                "user_first_name": answer.user.first_name,
-                "user_last_name": answer.user.last_name,
-                "id": answer.pk,
-            } for answer in poll.answers.all()]
+            "answers": answers_to_poll,
         }
+
         context['polls'].append(item)
 
     return render(request, 'polls/index.html', context)
