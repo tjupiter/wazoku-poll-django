@@ -34,4 +34,31 @@ The application uses 6 models
 5. polls.Poll - stores the question for the poll.
 6. polls.Answer - stores answers to the poll and the user who provided the answer. This model has a reference to the _Poll_ and _User_ model.
 
+## My solution
+
+To solve the issue:
+- I installed the Django Debug Toolbar 
+- after looking into the SQL queries it become obvious 
+that there were duplicated queries to the server
+- QuerySets are lazy and because we have a nested QuerySet 
+when we iterate over the answers we access a couple of attributes 
+that leads to several queries of the same data
+- this is called the N+1 Queries Problem 
+- the repetition of queries like `SELECT ... WHERE id = %s` 
+is a key signature of the problem. We can spot it in this project at 
+`SELECT ••• FROM "auth_user" WHERE "auth_user"."id" = %s` 
+- Django provides two QuerySet methods that can turn the N queries 
+back into one query, solving the performance issue
+These methods are `select_related()` and `prefetch_related()`
+- my solution was to introduce a QuerySet for Answers using 
+the `prefetch_related` method, then adding `select_related` method as well 
+to make one less query 
+- I create empty dictionary (`answers_to_poll`) at the
+beginning of the iteration of loops
+- I used an if statement to make sure we won't end up with diplicates
+
+## Applicant info
+### Name: Istvan Pitju Balogh
+### Portfolio: https://portfolio.pitju.hu/
+### Github: https://github.com/tjupiter
 
